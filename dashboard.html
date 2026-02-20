@@ -52,6 +52,15 @@ async function generatePlan() {
     alert("Error: " + data.error);
   }
 }
+    <input id="goal" placeholder="Your Goal (ex: Lose Weight)">
+<input id="days" placeholder="Days (ex: 7)">
+<button onclick="generatePlan()">Generate Plan</button>
+
+<div id="result"></div>
+
+<button onclick="logout()">Logout</button>
+
+<script src="app.js"></script>
   </script>
 </body>
 </html>
