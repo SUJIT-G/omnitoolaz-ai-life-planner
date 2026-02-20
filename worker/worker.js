@@ -1,73 +1,66 @@
 export default {
-  async fetch(request, env) {
-
-    // Handle CORS preflight
-    if (request.method === "OPTIONS") {
+  async fetch(request, env, ctx) {
+    // 1. Handle CORS Preflight requests
+    if (request.method === 'OPTIONS') {
       return new Response(null, {
-        headers: corsHeaders()
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type',
+        },
       });
     }
 
-    if (request.method !== "POST") {
-      return new Response(
-        JSON.stringify({ error: "Only POST requests allowed" }),
-        { status: 405, headers: corsHeaders() }
-      );
+    // 2. Only allow POST requests for the actual logic
+    if (request.method !== 'POST') {
+      return new Response('Method Not Allowed', { status: 405 });
     }
 
     try {
-      const body = await request.json();
-      const userPrompt = body.prompt;
+      // Parse the JSON body from the frontend
+      const { goal, category, timeframe } = await request.json();
 
-      if (!userPrompt) {
-        return new Response(
-          JSON.stringify({ error: "Prompt is required" }),
-          { status: 400, headers: corsHeaders() }
-        );
+      if (!goal || !category || !timeframe) {
+        return new Response(JSON.stringify({ error: 'Missing parameters' }), { 
+            status: 400,
+            headers: { 'Access-Control-Allow-Origin': '*' }
+        });
       }
 
-      // Call Cloudflare AI
-      const aiResponse = await env.AI.run(
-        "@cf/meta/llama-3-8b-instruct",
-        {
-          messages: [
-            {
-              role: "system",
-              content: "You are OmniToolaz AI Life Planner. Create structured daily plans with time blocks, priorities, productivity tips and motivation."
-            },
-            {
-              role: "user",
-              content: userPrompt
-            }
-          ]
-        }
-      );
+      // Construct the AI Prompt
+      const systemPrompt = `You are a world-class life coach and productivity expert. 
+Provide a clear, highly actionable step-by-step plan for the user. 
+Format using clean Markdown. Keep it inspiring but highly practical.`;
+      
+      const userPrompt = `Create a ${timeframe} plan for the category "${category}" to achieve this goal: "${goal}". 
+Include milestones, daily habits, and a brief mindset advice section.`;
 
-      return new Response(
-        JSON.stringify({
-          success: true,
-          result: aiResponse.response
-        }),
-        { headers: corsHeaders() }
-      );
+      const messages = [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ];
+
+      // Call Cloudflare Workers AI (Using Llama 3 Model)
+      const aiResponse = await env.AI.run('@cf/meta/llama-3-8b-instruct', {
+        messages: messages
+      });
+
+      // Return the generated response as JSON
+      return new Response(JSON.stringify({ plan: aiResponse.response }), {
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        },
+      });
 
     } catch (error) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: error.message
-        }),
-        { status: 500, headers: corsHeaders() }
-      );
+      return new Response(JSON.stringify({ error: error.message }), { 
+          status: 500,
+          headers: { 
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*' 
+          }
+      });
     }
-  }
+  },
 };
-
-function corsHeaders() {
-  return {
-    "Content-Type": "application/json",
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type"
-  };
-}
