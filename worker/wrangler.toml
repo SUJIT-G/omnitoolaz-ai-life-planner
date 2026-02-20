@@ -1,6 +1,6 @@
 name = "omnitoolaz-ai-life-planner"
 main = "worker.js"
-compatibility_date = "2024-12-01"
+compatibility_date = "2024-06-01"
 
 [ai]
 binding = "AI"
