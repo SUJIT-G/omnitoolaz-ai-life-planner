@@ -1,3 +1,16 @@
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+import { 
+    getAuth, 
+    GoogleAuthProvider, 
+    signInWithPopup, 
+    signInWithEmailAndPassword, 
+    createUserWithEmailAndPassword, 
+    onAuthStateChanged, 
+    signOut 
+} from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+
+// TODO: Replace with your actual Firebase project configuration
 const firebaseConfig = {
   apiKey: "AIzaSyC_NRbV_TPnQyFGPa2f1LhBxstI5q4wKrQ",
   authDomain: "omnitoolz-ai-life-planner.firebaseapp.com",
@@ -9,4 +22,15 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const auth = firebase.auth();
+const auth = getAuth(app);
+const googleProvider = new GoogleAuthProvider();
+
+export { 
+    auth, 
+    googleProvider, 
+    signInWithPopup, 
+    signInWithEmailAndPassword, 
+    createUserWithEmailAndPassword, 
+    onAuthStateChanged, 
+    signOut 
+};
