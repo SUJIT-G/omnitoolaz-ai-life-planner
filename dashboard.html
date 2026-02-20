@@ -23,5 +23,34 @@
 
 <script src="firebase.js"></script>
 <script src="auth.js"></script>
+
+  <script>
+async function generatePlan() {
+
+  const promptText = document.querySelector("textarea").value;
+
+  if(!promptText){
+    alert("Please enter your plan request!");
+    return;
+  }
+
+  const response = await fetch(
+    "https://omnitoolaz-ai-life-planner.devsujit.workers.dev/",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt: promptText })
+    }
+  );
+
+  const data = await response.json();
+
+  if (data.success) {
+    document.querySelector("textarea").value = data.result;
+  } else {
+    alert("Error: " + data.error);
+  }
+}
+  </script>
 </body>
 </html>
