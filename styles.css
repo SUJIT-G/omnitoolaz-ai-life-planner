@@ -301,3 +301,46 @@ input:focus, select:focus { border-color: var(--accent-color); }
     .main-content { padding: 1.5rem; }
     .row { flex-direction: column; }
 }
+
+.main-footer {
+    margin-top: 3rem;
+    padding: 2rem;
+    text-align: center;
+    border-radius: 12px 12px 0 0; /* Sirf top corners rounded */
+    border-bottom: none;
+}
+
+.footer-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.footer-brand h4 { color: var(--accent-color); margin-bottom: 0.2rem; }
+.footer-brand p { font-size: 0.8rem; color: var(--text-secondary); }
+
+.footer-links { display: flex; gap: 1.5rem; }
+.footer-links a {
+    text-decoration: none;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    transition: 0.3s;
+}
+
+.footer-links a:hover { color: var(--accent-color); }
+
+.footer-bottom {
+    border-top: 1px solid var(--card-border);
+    padding-top: 1rem;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+/* Mobile responsive footer */
+@media (max-width: 768px) {
+    .footer-content { flex-direction: column; text-align: center; }
+    .footer-links { flex-direction: column; gap: 0.8rem; }
+}
