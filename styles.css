@@ -302,6 +302,12 @@ input:focus, select:focus { border-color: var(--accent-color); }
     .row { flex-direction: column; }
 }
 
+.pricing-container { display: flex; justify-content: center; margin-top: 2rem; }
+.pricing-card { padding: 3rem; text-align: center; max-width: 400px; border: 2px solid var(--accent-color); }
+.price { font-size: 3rem; font-weight: 800; margin: 1rem 0; }
+.price span { font-size: 1rem; color: var(--text-secondary); }
+.pricing-card ul { list-style: none; text-align: left; margin: 2rem 0; }
+.pricing-card li { margin-bottom: 1rem; color: var(--text-secondary); }
 /* Layout Fix */
 .main-wrapper {
     display: flex;
