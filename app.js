@@ -185,3 +185,59 @@ function loadHistory() {
         container.appendChild(card);
     });
 }
+
+// --- RAZORPAY SUBSCRIPTION LOGIC ---
+
+async function openPayment(planType) {
+    if (!currentUser) return showToast("Please login first!", "error");
+
+    // Amount in Paise (e.g., 499 INR = 49900)
+    const amount = planType === 'monthly' ? 49900 : 499900;
+    const planName = planType === 'monthly' ? "Pro Monthly Plan" : "Pro Yearly Plan";
+
+    const options = {
+        "key": "YOUR_RAZORPAY_KEY_ID", // Stellar Insight wala Key ID yahan dalen
+        "amount": amount, 
+        "currency": "INR",
+        "name": "OmniToolz AI",
+        "description": planName,
+        "image": "https://omnitoolz.in/logo.png", // Aapka logo
+        "handler": async function (response) {
+            // Payment success hone par Firestore update karein
+            await activateProPlan(response.razorpay_payment_id, planType);
+        },
+        "prefill": {
+            "email": currentUser.email
+        },
+        "theme": {
+            "color": "#6d28d9"
+        }
+    };
+
+    const rzp1 = new Razorpay(options);
+    rzp1.open();
+}
+
+// Database me user ko Pro banane ka function
+async function activateProPlan(paymentId, planType) {
+    try {
+        const { db, doc, updateDoc } = await import('./firebase.js');
+        const userRef = doc(db, "users", currentUser.uid);
+        
+        await updateDoc(userRef, { 
+            isPro: true,
+            planType: planType,
+            paymentId: paymentId,
+            updatedAt: new Date().toISOString()
+        });
+
+        showToast(`Welcome to Pro ${planType}! 👑`, "success");
+        setTimeout(() => location.reload(), 2000);
+    } catch (err) {
+        showToast("Database update failed but payment was successful. Contact support.", "error");
+    }
+}
+
+// Button Click Event Listeners
+document.getElementById('monthly-pay-btn')?.addEventListener('click', () => openPayment('monthly'));
+document.getElementById('yearly-pay-btn')?.addEventListener('click', () => openPayment('yearly'));
