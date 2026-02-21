@@ -6,6 +6,7 @@
     <title>OmniToolz AI Dashboard</title>
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body class="dashboard-page">
     <div id="toast-container"></div>
@@ -16,78 +17,144 @@
                 <h2>OmniToolz <span class="accent">AI</span></h2>
             </div>
             <nav class="nav-menu">
-                <a href="#" class="nav-item active" data-target="home">Home</a>
-                <a href="#" class="nav-item" data-target="history">My Plans</a>
-                <a href="#" class="nav-item">Productivity Tools</a>
-                <a href="#" class="nav-item">Settings</a>
+                <a href="#" class="nav-item active" data-target="home">🏠 Home</a>
+                <a href="#" class="nav-item" data-target="history">📁 My Plans</a>
+                <a href="#" class="nav-item" data-target="tools">⚡ Productivity Tools</a>
+                <a href="#" class="nav-item" data-target="settings">⚙️ Settings</a>
             </nav>
             <div class="sidebar-footer">
-                <button id="theme-toggle" class="btn-icon">☀️ Toggle Theme</button>
+                <button id="theme-toggle" class="btn-icon">☀️ Theme</button>
                 <button id="logout-btn" class="btn-danger">Logout</button>
             </div>
         </aside>
 
-        <main class="main-content">
-            <section id="home-section" class="content-section active">
-                <header>
-                    <h1>Design Your Life Plan</h1>
-                    <p>Let AI map out your success journey.</p>
-                </header>
+        <main class="main-wrapper">
+            
+            <header class="top-navbar glass-card">
+                <div class="nav-left">
+                    <span id="mobile-menu-btn" class="mobile-only">☰</span>
+                    <h3 id="current-page-title">Dashboard</h3>
+                </div>
+                <div class="nav-right">
+                    <button class="btn-icon header-btn">🔔</button>
+                    <div class="avatar">👤</div>
+                </div>
+            </header>
 
-                <div class="planner-form glass-card">
-                    <div class="input-group">
-                        <label>What is your main goal?</label>
-                        <input type="text" id="goal-input" placeholder="e.g., Start a tech blog, Run a marathon...">
-                    </div>
-                    
-                    <div class="row">
+            <div class="main-content">
+                <section id="home-section" class="content-section active">
+                    <header class="section-header">
+                        <h1>Design Your Life Plan ✨</h1>
+                        <p>Let AI map out your success journey.</p>
+                    </header>
+
+                    <div class="planner-form glass-card">
                         <div class="input-group">
-                            <label>Category</label>
-                            <select id="category-select">
-                                <option value="Health">Health</option>
-                                <option value="Study">Study</option>
-                                <option value="Business">Business</option>
-                                <option value="Relationships">Relationships</option>
-                                <option value="Spiritual">Spiritual</option>
+                            <label>What is your main goal?</label>
+                            <input type="text" id="goal-input" placeholder="e.g., Lose weight 5kgs, Start a tech blog...">
+                        </div>
+                        
+                        <div class="row">
+                            <div class="input-group">
+                                <label>Category</label>
+                                <select id="category-select">
+                                    <option value="Health">Health 🏃‍♂️</option>
+                                    <option value="Study">Study 📚</option>
+                                    <option value="Business">Business 💼</option>
+                                    <option value="Relationships">Relationships 🤝</option>
+                                    <option value="Spiritual">Spiritual 🧘‍♂️</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label>Timeframe</label>
+                                <select id="timeframe-select">
+                                    <option value="7 days">7 Days</option>
+                                    <option value="30 days">30 Days</option>
+                                    <option value="90 days">90 Days</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <button id="generate-btn" class="btn-primary animated-gradient full-width">
+                            Generate Plan 🚀
+                        </button>
+                        
+                        <div id="loader" class="loader-container hidden">
+                            <p>AI is thinking...</p>
+                            <div class="progress-bar"><div class="progress-fill"></div></div>
+                        </div>
+                    </div>
+
+                    <div id="output-panel" class="output-panel glass-card hidden">
+                        <div class="output-actions">
+                            <button id="copy-btn" class="btn-small">Copy</button>
+                            <button id="download-btn" class="btn-small">Download PDF</button>
+                            <button id="save-btn" class="btn-small btn-primary">Save to History</button>
+                        </div>
+                        <div id="ai-result" class="ai-content markdown-body"></div>
+                    </div>
+                </section>
+
+                <section id="history-section" class="content-section hidden">
+                    <header class="section-header">
+                        <h1>My Saved Plans 📁</h1>
+                        <p>Access your previously generated roadmaps.</p>
+                    </header>
+                    <div id="history-container" class="history-grid"></div>
+                </section>
+
+                <section id="tools-section" class="content-section hidden">
+                    <header class="section-header">
+                        <h1>Productivity Tools ⚡</h1>
+                        <p>Boost your workflow with these utilities.</p>
+                    </header>
+                    <div class="tools-grid">
+                        <div class="tool-card glass-card">
+                            <h3>🍅 Pomodoro Timer</h3>
+                            <p>Focus for 25 minutes, rest for 5.</p>
+                            <button class="btn-secondary full-width">Launch App</button>
+                        </div>
+                        <div class="tool-card glass-card">
+                            <h3>📝 Habit Tracker</h3>
+                            <p>Monitor your daily non-negotiables.</p>
+                            <button class="btn-secondary full-width">Launch App</button>
+                        </div>
+                        <div class="tool-card glass-card">
+                            <h3>🎵 Focus Sounds</h3>
+                            <p>Lo-Fi beats and white noise.</p>
+                            <button class="btn-secondary full-width">Play</button>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="settings-section" class="content-section hidden">
+                    <header class="section-header">
+                        <h1>Settings ⚙️</h1>
+                        <p>Manage your account preferences.</p>
+                    </header>
+                    <div class="settings-form glass-card">
+                        <div class="input-group">
+                            <label>Display Name</label>
+                            <input type="text" placeholder="Your Name">
+                        </div>
+                        <div class="input-group">
+                            <label>Email Notifications</label>
+                            <select>
+                                <option>Enabled</option>
+                                <option>Disabled</option>
                             </select>
                         </div>
                         <div class="input-group">
-                            <label>Timeframe</label>
-                            <select id="timeframe-select">
-                                <option value="7 days">7 Days</option>
-                                <option value="30 days">30 Days</option>
-                                <option value="90 days">90 Days</option>
+                            <label>Export Preferences</label>
+                            <select>
+                                <option>PDF Format</option>
+                                <option>Text Format</option>
                             </select>
                         </div>
+                        <button class="btn-primary animated-gradient">Save Changes</button>
                     </div>
-
-                    <button id="generate-btn" class="btn-primary animated-gradient full-width">
-                        Generate Plan
-                    </button>
-                    
-                    <div id="loader" class="loader-container hidden">
-                        <p>AI is thinking...</p>
-                        <div class="progress-bar"><div class="progress-fill"></div></div>
-                    </div>
-                </div>
-
-                <div id="output-panel" class="output-panel glass-card hidden">
-                    <div class="output-actions">
-                        <button id="copy-btn" class="btn-small">Copy</button>
-                        <button id="download-btn" class="btn-small">Download PDF</button>
-                        <button id="save-btn" class="btn-small btn-primary">Save to History</button>
-                    </div>
-                    <div id="ai-result" class="ai-content"></div>
-                </div>
-            </section>
-
-            <section id="history-section" class="content-section hidden">
-                <header>
-                    <h1>My Saved Plans</h1>
-                </header>
-                <div id="history-container" class="history-grid">
-                    </div>
-            </section>
+                </section>
+            </div>
         </main>
     </div>
 
