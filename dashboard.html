@@ -20,9 +20,14 @@
             <nav class="nav-menu">
                 <a href="#" class="nav-item active" data-target="home">🏠 Home</a>
                 <a href="#" class="nav-item" data-target="history">📁 My Plans</a>
-                <a href="#" class="nav-item" data-target="tools">⚡ Productivity Tools</a>
+                <a href="#" class="nav-item" data-target="subscription">🚀 Upgrade</a>
                 <a href="#" class="nav-item" data-target="settings">⚙️ Settings</a>
             </nav>
+            
+            <div class="user-badge glass-card" style="margin: 10px; padding: 10px; font-size: 0.8rem; text-align: center;">
+                Status: <span id="user-status" style="color: var(--accent-color); font-weight: bold;">Free Plan</span>
+            </div>
+
             <div class="sidebar-footer">
                 <button id="theme-toggle" class="btn-icon">☀️ Theme</button>
                 <button id="logout-btn" class="btn-danger">Logout</button>
@@ -30,11 +35,10 @@
         </aside>
 
         <main class="main-wrapper">
-            
             <header class="top-navbar glass-card">
                 <div class="nav-left">
                     <span id="mobile-menu-btn" class="mobile-only">☰</span>
-                    <h3 id="current-page-title">Dashboard</h3>
+                    <h3 id="current-page-title">Home</h3>
                 </div>
                 <div class="nav-right">
                     <button class="btn-icon header-btn">🔔</button>
@@ -42,179 +46,109 @@
                 </div>
             </header>
 
-            <div class="user-badge glass-card" style="margin: 10px; padding: 10px; font-size: 0.8rem; text-align: center;">
-    Status: <span id="user-status" style="color: var(--accent-color); font-weight: bold;">Free Plan</span>
-    <button id="upgrade-sidebar-btn" class="btn-primary btn-small" style="margin-top: 5px; width: 100%;">🚀 Upgrade</button>
-</div>
-            
-<section id="subscription-section" class="content-section hidden">
-    <header class="section-header">
-        <h1>Go Pro 🚀</h1>
-        <p>Unlock unlimited AI life planning and professional exports.</p>
-    </header>
-    
-    <div class="pricing-container">
-        <div class="pricing-card glass-card active-plan">
-            <h3>Pro Member</h3>
-            <div class="price">₹299<span>/month</span></div>
-            <ul>
-                <li>✅ Unlimited AI Generations</li>
-                <li>✅ Cloud Storage Forever</li>
-                <li>✅ High-Quality PDF Exports</li>
-                <li>✅ Priority AI Processing</li>
-            </ul>
-            <button id="checkout-btn" class="btn-primary animated-gradient full-width">Subscribe Now</button>
-        </div>
-    </div>
-</section>
             <div class="main-content">
-                <section id="home-section" class="content-section active">
+                <section id="home-section" class="content-section">
                     <header class="section-header">
                         <h1>Design Your Life Plan ✨</h1>
                         <p>Let AI map out your success journey.</p>
                     </header>
 
-                        <div class="planner-form glass-card">
-    <div class="planner-box">
-        
-        <textarea id="goalInput" placeholder="Aapka goal kya hai? (Jaise: Business plan for NutriCart AI...)" 
-                  style="width: 100%; min-height: 100px; padding: 12px; border-radius: 10px; background: #1a0b2e; color: white; border: 1px solid #3d2b56; font-family: inherit;"></textarea>
+                    <div class="planner-form glass-card">
+                        <div class="planner-box">
+                            <textarea id="goalInput" placeholder="Aapka goal kya hai? (Jaise: Business plan for NutriCart AI...)" 
+                                      style="width: 100%; min-height: 100px; padding: 12px; border-radius: 10px; background: #1a0b2e; color: white; border: 1px solid #3d2b56; font-family: inherit;"></textarea>
 
-        <div style="margin-top: 15px;">
-            <label for="imageFile" style="cursor:pointer; color:#a855f7; border: 1px dashed #a855f7; padding: 10px; display: block; text-align: center;">
-                <i class="fas fa-camera"></i> Upload Screenshot/Image
-            </label>
-            <input type="file" id="imageFile" accept="image/*" style="display:none;" onchange="previewImage(this)">
-            <div id="fileInfo" style="font-size: 12px; color: #888; margin-top: 5px;"></div>
-        </div>
-                        
-                        <div class="row">
-                            <div class="input-group">
-                                <label>Category</label>
-                                <select id="category-select">
-                                    <option value="Health">Health 🏃‍♂️</option>
-                                    <option value="Study">Study 📚</option>
-                                    <option value="Business">Business 💼</option>
-                                    <option value="Relationships">Relationships 🤝</option>
-                                    <option value="Spiritual">Spiritual 🧘‍♂️</option>
-                                </select>
+                            <div style="margin-top: 15px;">
+                                <label for="imageFile" style="cursor:pointer; color:#a855f7; border: 1px dashed #a855f7; padding: 10px; display: block; text-align: center;">
+                                    📷 Upload Screenshot/Image
+                                </label>
+                                <input type="file" id="imageFile" accept="image/*" style="display:none;" onchange="updateFileName(this)">
+                                <div id="fileInfo" style="font-size: 12px; color: #888; text-align: center; margin-top: 5px;">No file selected</div>
                             </div>
-                            <div class="input-group">
-                                <label>Timeframe</label>
-                                <select id="timeframe-select">
-                                    <option value="7 days">7 Days</option>
-                                    <option value="30 days">30 Days</option>
-                                    <option value="90 days">90 Days</option>
-                                </select>
+                            
+                            <div class="row" style="display: flex; gap: 10px; margin-top: 15px;">
+                                <div class="input-group" style="flex: 1;">
+                                    <label>Category</label>
+                                    <select id="category-select" style="width: 100%;">
+                                        <option value="Health">Health 🏃‍♂️</option>
+                                        <option value="Study">Study 📚</option>
+                                        <option value="Business" selected>Business 💼</option>
+                                        <option value="Relationships">Relationships 🤝</option>
+                                        <option value="Spiritual">Spiritual 🧘‍♂️</option>
+                                    </select>
+                                </div>
+                                <div class="input-group" style="flex: 1;">
+                                    <label>Timeframe</label>
+                                    <select id="timeframe-select" style="width: 100%;">
+                                        <option value="7 days">7 Days</option>
+                                        <option value="30 days">30 Days</option>
+                                        <option value="90 days">90 Days</option>
+                                    </select>
+                                </div>
                             </div>
-                        </div>
 
-                        <button id="generate-btn" class="btn-primary animated-gradient full-width">
-                            Generate Plan 🚀
-                        </button>
-                        
-                        <div id="loader" class="loader-container hidden">
-                            <p>AI is thinking...</p>
-                            <div class="progress-bar"><div class="progress-fill"></div></div>
+                            <button id="generate-btn" class="btn-primary full-width" style="margin-top: 20px;">Generate Plan ⚡</button>
                         </div>
                     </div>
 
-                    <div id="output-panel" class="output-panel glass-card hidden">
-                        <div class="output-actions">
-                            <button id="copy-btn" class="btn-small">Copy</button>
-                            <button id="download-btn" class="btn-small">Download PDF</button>
-                            <button id="save-btn" class="btn-small btn-primary">Save to History</button>
+                    <div id="loader" class="hidden" style="text-align: center; margin: 20px;">
+                        <div class="spinner"></div>
+                        <p>AI is thinking...</p>
+                    </div>
+
+                    <div id="output-panel" class="hidden" style="margin-top: 20px;">
+                        <div class="glass-card">
+                            <div id="ai-result" class="markdown-body"></div>
+                            <div class="action-buttons" style="display: flex; gap: 10px; margin-top: 20px;">
+                                <button id="copy-btn" class="btn-secondary">📋 Copy</button>
+                                <button id="download-btn" class="btn-secondary">📄 PDF</button>
+                                <button id="save-btn" class="btn-accent">💾 Save Plan</button>
+                            </div>
                         </div>
-                        <div id="ai-result" class="ai-content markdown-body"></div>
                     </div>
                 </section>
 
                 <section id="history-section" class="content-section hidden">
                     <header class="section-header">
-                        <h1>My Saved Plans 📁</h1>
-                        <p>Access your previously generated roadmaps.</p>
+                        <h1>My Plans 📁</h1>
+                        <p>Your saved AI strategies.</p>
                     </header>
-                    <div id="history-container" class="history-grid"></div>
+                    <div id="history-container" class="grid-container">
+                        </div>
                 </section>
 
-                <section id="tools-section" class="content-section hidden">
+                <section id="subscription-section" class="content-section hidden">
                     <header class="section-header">
-                        <h1>Productivity Tools ⚡</h1>
-                        <p>Boost your workflow with these utilities.</p>
+                        <h1>Go Pro 🚀</h1>
+                        <p>Unlock unlimited AI life planning.</p>
                     </header>
-                    <div class="tools-grid">
-                        <div class="tool-card glass-card">
-                            <h3>🍅 Pomodoro Timer</h3>
-                            <p>Focus for 25 minutes, rest for 5.</p>
-                            <button class="btn-secondary full-width">Launch App</button>
+                    <div class="pricing-container">
+                        <div class="pricing-card glass-card">
+                            <h3>Monthly Pro</h3>
+                            <div class="price">₹499<span>/mo</span></div>
+                            <button id="monthly-pay-btn" class="btn-primary full-width">Upgrade Now</button>
                         </div>
-                        <div class="tool-card glass-card">
-                            <h3>📝 Habit Tracker</h3>
-                            <p>Monitor your daily non-negotiables.</p>
-                            <button class="btn-secondary full-width">Launch App</button>
+                        <div class="pricing-card glass-card">
+                            <h3>Yearly Pro</h3>
+                            <div class="price">₹4,999<span>/yr</span></div>
+                            <button id="yearly-pay-btn" class="btn-primary full-width">Save 20%</button>
                         </div>
-                        <div class="tool-card glass-card">
-                            <h3>🎵 Focus Sounds</h3>
-                            <p>Lo-Fi beats and white noise.</p>
-                            <button class="btn-secondary full-width">Play</button>
-                        </div>
-                        <div class="tool-card glass-card">
-    <h3>🧾 Invoice Generator</h3>
-    <p>Create professional invoices instantly.</p>
-    <a href="https://omnitoolz.in/invoice-generator-pro.html" target="_blank" class="launch-btn">Launch App</a>
-                        </div>
-                    </div>
-                </section>
-
-                <section id="settings-section" class="content-section hidden">
-                    <header class="section-header">
-                        <h1>Settings ⚙️</h1>
-                        <p>Manage your account preferences.</p>
-                    </header>
-                    <div class="settings-form glass-card">
-                        <div class="input-group">
-                            <label>Display Name</label>
-                            <input type="text" placeholder="Your Name">
-                        </div>
-                        <div class="input-group">
-                            <label>Email Notifications</label>
-                            <select>
-                                <option>Enabled</option>
-                                <option>Disabled</option>
-                            </select>
-                        </div>
-                        <div class="input-group">
-                            <label>Export Preferences</label>
-                            <select>
-                                <option>PDF Format</option>
-                                <option>Text Format</option>
-                            </select>
-                        </div>
-                        <button class="btn-primary animated-gradient">Save Changes</button>
                     </div>
                 </section>
             </div>
         </main>
     </div>
 
-    <footer class="main-footer glass-card">
-    <div class="footer-content">
-        <div class="footer-brand">
-            <h4>OmniToolz AI</h4>
-            <p>Your AI Life Planner</p>
-        </div>
-        <div class="footer-links">
-            <a href="https://omnitoolz.in/privacy" target="_blank">Privacy Policy</a>
-            <a href="https://omnitoolz.in/terms" target="_blank">Terms & Conditions</a>
-            <a href="https://omnitoolz.in/refund" target="_blank">Refund Policy</a>
-            <a href="https://omnitoolz.in/contact" target="_blank">Contact Us</a>
-        </div>
-    </div>
-    <div class="footer-bottom">
-        <p>© 2026 OmniToolz AI | Powered by Stellar Insight</p>
-    </div>
-    </footer>
-    <script type="module" src="firebase.js"></script>
+    <script>
+        // File selection ke baad text update karne ke liye
+        function updateFileName(input) {
+            const info = document.getElementById('fileInfo');
+            if (input.files && input.files[0]) {
+                info.innerText = "Selected: " + input.files[0].name;
+                info.style.color = "#a855f7";
+            }
+        }
+    </script>
     <script type="module" src="app.js"></script>
 </body>
 </html>
