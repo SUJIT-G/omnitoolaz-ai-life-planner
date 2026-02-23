@@ -71,82 +71,43 @@ navItems.forEach(item => {
     });
 });
 
-// Image ko Base64 mein badalne ka function (AI ke liye zaroori)
-const fileToBase64 = (file) => new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = error => reject(error);
-});
-
 generateBtn?.addEventListener('click', async () => {
+    const goal = document.getElementById('goal-input').value.trim();
+    const category = document.getElementById('category-select').value;
+    const timeframe = document.getElementById('timeframe-select').value;
+
+    if (!goal) return showToast('Please enter a goal.', 'error');
+
+    generateBtn.disabled = true;
+    loader.classList.remove('hidden');
+    outputPanel.classList.add('hidden');
+    
     try {
-        // 1. Safely access the goal input (handling both possible IDs)
-        const goalElement = document.getElementById('goalInput') || document.getElementById('goal-input');
-        const goal = goalElement ? goalElement.value.trim() : '';
-        
-        // 2. Safely access dropdowns with fallbacks
-        const categoryElement = document.getElementById('category-select');
-        const category = categoryElement ? categoryElement.value : 'General';
-        
-        const timeframeElement = document.getElementById('timeframe-select');
-        const timeframe = timeframeElement ? timeframeElement.value : '1 Week';
-        
-        // 3. Safely access the image file input
-        const imageInputElement = document.getElementById('imageFile');
-        const imageFile = imageInputElement && imageInputElement.files ? imageInputElement.files[0] : null;
-
-        // 4. Validate goal input
-        if (!goal) {
-            return showToast('Please enter a goal.', 'error');
-        }
-
-        // Start loading UI
-        generateBtn.disabled = true;
-        loader.classList.remove('hidden');
-        outputPanel.classList.add('hidden');
-        
-        let imageData = null;
-        // Convert to Base64 only if an image was actually uploaded
-        if (imageFile) {
-            imageData = await fileToBase64(imageFile);
-        }
-
         // MUST UPDATE WITH YOUR CLOUDFLARE WORKER URL
         const workerUrl = 'https://omnitoolaz-ai-life-planner.devsujit.workers.dev/';
         
         const response = await fetch(workerUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                goal: goal, 
-                category: category, 
-                timeframe: timeframe,
-                image: imageData // Sending Base64 data to the worker
-            })
+            body: JSON.stringify({ goal, category, timeframe })
         });
 
-        if (!response.ok) {
-            throw new Error(`Failed to generate plan. Server responded with status: ${response.status}`);
-        }
+        if (!response.ok) throw new Error('Failed to generate plan.');
         
         const data = await response.json();
         currentAIResponse = data.plan;
 
-        // Update UI with success
         loader.classList.add('hidden');
         outputPanel.classList.remove('hidden');
         
         // Render Markdown beautifully using Marked.js
         aiResultElement.innerHTML = marked.parse(currentAIResponse);
         
-        showToast('Plan generated successfully!', 'success');
+        showToast('Plan generated successfully!');
 
     } catch (error) {
-        // Now catches all errors, including DOM selection issues
-        console.error("Generation Error:", error);
         loader.classList.add('hidden');
-        showToast(error.message || 'Something went wrong!', 'error');
+        showToast(error.message, 'error');
     } finally {
         generateBtn.disabled = false;
     }
