@@ -80,25 +80,34 @@ const fileToBase64 = (file) => new Promise((resolve, reject) => {
 });
 
 generateBtn?.addEventListener('click', async () => {
-    // Dhyan dein: ID ab 'goalInput' hai (textarea ke hisaab se)
-    const goal = document.getElementById('goalInput').value.trim();
-    
-    // Agar aapne category aur timeframe wale dropdowns hata diye hain, toh ye error na de isliye '?' lagaya hai
-    const category = document.getElementById('category-select')?.value || 'General';
-    const timeframe = document.getElementById('timeframe-select')?.value || '1 Week';
-    
-    // Nayi image file uthane ke liye
-    const imageFile = document.getElementById('imageFile').files[0];
-
-    if (!goal) return showToast('Please enter a goal.', 'error');
-
-    generateBtn.disabled = true;
-    loader.classList.remove('hidden');
-    outputPanel.classList.add('hidden');
-    
     try {
+        // 1. Safely access the goal input (handling both possible IDs)
+        const goalElement = document.getElementById('goalInput') || document.getElementById('goal-input');
+        const goal = goalElement ? goalElement.value.trim() : '';
+        
+        // 2. Safely access dropdowns with fallbacks
+        const categoryElement = document.getElementById('category-select');
+        const category = categoryElement ? categoryElement.value : 'General';
+        
+        const timeframeElement = document.getElementById('timeframe-select');
+        const timeframe = timeframeElement ? timeframeElement.value : '1 Week';
+        
+        // 3. Safely access the image file input
+        const imageInputElement = document.getElementById('imageFile');
+        const imageFile = imageInputElement && imageInputElement.files ? imageInputElement.files[0] : null;
+
+        // 4. Validate goal input
+        if (!goal) {
+            return showToast('Please enter a goal.', 'error');
+        }
+
+        // Start loading UI
+        generateBtn.disabled = true;
+        loader.classList.remove('hidden');
+        outputPanel.classList.add('hidden');
+        
         let imageData = null;
-        // Agar user ne photo upload ki hai, toh use Base64 mein convert karein
+        // Convert to Base64 only if an image was actually uploaded
         if (imageFile) {
             imageData = await fileToBase64(imageFile);
         }
@@ -113,26 +122,31 @@ generateBtn?.addEventListener('click', async () => {
                 goal: goal, 
                 category: category, 
                 timeframe: timeframe,
-                image: imageData // Image ka data Cloudflare worker ko bhej rahe hain
+                image: imageData // Sending Base64 data to the worker
             })
         });
 
-        if (!response.ok) throw new Error('Failed to generate plan.');
+        if (!response.ok) {
+            throw new Error(`Failed to generate plan. Server responded with status: ${response.status}`);
+        }
         
         const data = await response.json();
         currentAIResponse = data.plan;
 
+        // Update UI with success
         loader.classList.add('hidden');
         outputPanel.classList.remove('hidden');
         
         // Render Markdown beautifully using Marked.js
         aiResultElement.innerHTML = marked.parse(currentAIResponse);
         
-        showToast('Plan generated successfully!');
+        showToast('Plan generated successfully!', 'success');
 
     } catch (error) {
+        // Now catches all errors, including DOM selection issues
+        console.error("Generation Error:", error);
         loader.classList.add('hidden');
-        showToast(error.message, 'error');
+        showToast(error.message || 'Something went wrong!', 'error');
     } finally {
         generateBtn.disabled = false;
     }
