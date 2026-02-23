@@ -71,10 +71,24 @@ navItems.forEach(item => {
     });
 });
 
+// Image ko Base64 mein badalne ka function (AI ke liye zaroori)
+const fileToBase64 = (file) => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = error => reject(error);
+});
+
 generateBtn?.addEventListener('click', async () => {
-    const goal = document.getElementById('goal-input').value.trim();
-    const category = document.getElementById('category-select').value;
-    const timeframe = document.getElementById('timeframe-select').value;
+    // Dhyan dein: ID ab 'goalInput' hai (textarea ke hisaab se)
+    const goal = document.getElementById('goalInput').value.trim();
+    
+    // Agar aapne category aur timeframe wale dropdowns hata diye hain, toh ye error na de isliye '?' lagaya hai
+    const category = document.getElementById('category-select')?.value || 'General';
+    const timeframe = document.getElementById('timeframe-select')?.value || '1 Week';
+    
+    // Nayi image file uthane ke liye
+    const imageFile = document.getElementById('imageFile').files[0];
 
     if (!goal) return showToast('Please enter a goal.', 'error');
 
@@ -83,13 +97,24 @@ generateBtn?.addEventListener('click', async () => {
     outputPanel.classList.add('hidden');
     
     try {
+        let imageData = null;
+        // Agar user ne photo upload ki hai, toh use Base64 mein convert karein
+        if (imageFile) {
+            imageData = await fileToBase64(imageFile);
+        }
+
         // MUST UPDATE WITH YOUR CLOUDFLARE WORKER URL
         const workerUrl = 'https://omnitoolaz-ai-life-planner.devsujit.workers.dev/';
         
         const response = await fetch(workerUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ goal, category, timeframe })
+            body: JSON.stringify({ 
+                goal: goal, 
+                category: category, 
+                timeframe: timeframe,
+                image: imageData // Image ka data Cloudflare worker ko bhej rahe hain
+            })
         });
 
         if (!response.ok) throw new Error('Failed to generate plan.');
