@@ -74,10 +74,26 @@
                         <p>Let AI map out your success journey.</p>
                     </header>
 
-                    <div class="planner-form glass-card">
-                        <div class="input-group">
-                            <label>What is your main goal?</label>
-                            <input type="text" id="goal-input" placeholder="e.g., Lose weight 5kgs, Start a tech blog...">
+                        <div class="planner-form glass-card">
+    <div class="planner-box">
+        <h3>Design Your Life Plan ✨</h3>
+        
+        <textarea id="goalInput" placeholder="Aapka goal kya hai? (Jaise: Business plan for NutriCart AI...)" 
+                  style="width: 100%; min-height: 100px; padding: 12px; border-radius: 10px; background: #1a0b2e; color: white; border: 1px solid #3d2b56; font-family: inherit;"></textarea>
+
+        <div style="margin-top: 15px;">
+            <label for="imageFile" style="cursor:pointer; color:#a855f7; border: 1px dashed #a855f7; padding: 10px; display: block; text-align: center;">
+                <i class="fas fa-camera"></i> Upload Screenshot/Image
+            </label>
+            <input type="file" id="imageFile" accept="image/*" style="display:none;" onchange="previewImage(this)">
+            <div id="fileInfo" style="font-size: 12px; color: #888; margin-top: 5px;"></div>
+        </div>
+
+        <button onclick="generatePlan()" id="generateBtn" style="width: 100%; margin-top: 20px; padding: 12px; background: #4f46e5; border: none; border-radius: 8px; color: white; cursor: pointer;">
+            Generate Plan 🚀
+        </button>
+    </div>
+    
                         </div>
                         
                         <div class="row">
