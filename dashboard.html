@@ -136,21 +136,7 @@
                     </div>
                 </section>
             </div>
-        </main>
-    </div>
-
-    <script>
-        // File selection ke baad text update karne ke liye
-        function updateFileName(input) {
-            const info = document.getElementById('fileInfo');
-            if (input.files && input.files[0]) {
-                info.innerText = "Selected: " + input.files[0].name;
-                info.style.color = "#a855f7";
-            }
-        }
-    </script>
-    <script type="module" src="app.js"></script>
-    <div class="layout">
+            <div class="layout">
     <aside class="sidebar">...</aside>
 
     <div class="main-wrapper">
@@ -174,6 +160,20 @@
             <p class="footer-copy">© 2026 OmniToolz AI | Powered by Stellar Insight</p>
         </footer>
     </div> 
+            </div>
+        </main>
     </div>
+
+    <script>
+        // File selection ke baad text update karne ke liye
+        function updateFileName(input) {
+            const info = document.getElementById('fileInfo');
+            if (input.files && input.files[0]) {
+                info.innerText = "Selected: " + input.files[0].name;
+                info.style.color = "#a855f7";
+            }
+        }
+    </script>
+    <script type="module" src="app.js"></script>
 </body>
 </html>
