@@ -28,7 +28,7 @@ function showToast(message, type = 'info') {
 // Redirect if already logged in
 onAuthStateChanged(auth, (user) => {
     if (user && window.location.pathname.includes('index.html')) {
-        window.location.href = 'dashboard.html';
+        window.location.href = 'index.html';
     }
 });
 
