@@ -23,11 +23,14 @@ marked.setOptions({
 });
 
 onAuthStateChanged(auth, (user) => {
-    if (!user) {
-        window.location.href = 'index.html';
-    } else {
+    if (user) {
         currentUser = user;
         loadHistory();
+        document.getElementById('logout-btn')?.classList.remove('hidden'); // Logout dikhayein
+    } else {
+        currentUser = null;
+        document.getElementById('logout-btn')?.classList.add('hidden'); // Bina login wale ko logout na dikhayein
+        // Pehle yahan se user ko index.html (login) bhej dete the, ab nahi bhejenge!
     }
 });
 
