@@ -12,32 +12,22 @@ const outputPanel = document.getElementById('output-panel');
 const aiResultElement = document.getElementById('ai-result');
 const pageTitle = document.getElementById('current-page-title');
 
-// Sidebar Navigation Logic
+// Sidebar Navigation
 const navItems = document.querySelectorAll('.nav-item');
 const sections = document.querySelectorAll('.content-section');
 
-// Set up marked.js options for safe, clean HTML
-marked.setOptions({
-    breaks: true, // Converts \n to <br>
-    gfm: true     // GitHub Flavored Markdown
-});
+marked.setOptions({ breaks: true, gfm: true });
 
-// --- AUTH STATE LOGIC (FREEMIUM FRIENDLY) ---
+// --- AUTH STATE ---
 onAuthStateChanged(auth, (user) => {
     if (user) {
         currentUser = user;
         loadHistory();
-        document.getElementById('logout-btn')?.classList.remove('hidden'); // Logout dikhayein
+        if(logoutBtn) logoutBtn.classList.remove('hidden');
     } else {
         currentUser = null;
-        document.getElementById('logout-btn')?.classList.add('hidden'); // Bina login wale ko logout na dikhayein
-        // User ko site par rehne dein, login page par redirect NAHI karenge
+        if(logoutBtn) logoutBtn.classList.add('hidden');
     }
-});
-
-logoutBtn?.addEventListener('click', async () => {
-    await signOut(auth);
-    window.location.href = 'index.html'; // Logout ke baad main page par hi rakhein
 });
 
 function showToast(message, type = 'info') {
@@ -49,76 +39,42 @@ function showToast(message, type = 'info') {
     setTimeout(() => toast.remove(), 3000);
 }
 
-// Helper: Check login before allowing actions
+// Helper: Check login
 function checkLoginAndRedirect(actionText) {
     if (!currentUser) {
-        showToast(`${actionText} ke liye account banayein ya Login karein! 🔒`, "error");
-        setTimeout(() => window.location.href = 'login.html', 2000); // Redirect to login page
+        showToast(`${actionText} ke liye login karein! 🔒`, "error");
+        setTimeout(() => window.location.href = 'login.html', 1500);
         return false;
     }
     return true;
 }
 
-themeToggle?.addEventListener('click', () => {
-    const currentTheme = document.body.getAttribute('data-theme') || 'dark';
-    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-    document.body.setAttribute('data-theme', newTheme);
-});
-
-// Sidebar Navigation
-navItems.forEach(item => {
-    item.addEventListener('click', (e) => {
-        e.preventDefault();
-        const targetId = item.getAttribute('data-target');
-        if(!targetId) return;
-
-        // Block "My Plans" or "History" if user is not logged in
-        if ((targetId === 'history' || targetId === 'my-plans') && !currentUser) {
-            showToast("My Plans dekhne ke liye Login karein! 🔒", "error");
-            setTimeout(() => window.location.href = 'login.html', 2000);
-            return;
-        }
-
-        // Update active class on menu
-        navItems.forEach(n => n.classList.remove('active'));
-        item.classList.add('active');
-
-        // Update Top Navbar Title based on menu item text
-        if(pageTitle) pageTitle.innerText = item.innerText.replace(/[🏠📁⚡⚙️]/g, '').trim();
-
-        // Hide all sections, show target section
-        sections.forEach(s => s.classList.add('hidden'));
-        document.getElementById(`${targetId}-section`).classList.remove('hidden');
-    });
-});
-
-// --- GENERATE PLAN LOGIC (1 FREE TRIAL) ---
+// --- GENERATE LOGIC (FIXED) ---
 generateBtn?.addEventListener('click', async () => {
-    // Free Trial Check
+    // 1. Check Freemium Trial
     if (!currentUser) {
-        const usedFreeTrial = localStorage.getItem('omniFreeTrial');
-        if (usedFreeTrial === 'true') {
-            showToast("Aapka 1 Free Plan use ho chuka hai. Aur generate karne ke liye Login karein! 🚀", "error");
-            setTimeout(() => window.location.href = 'login.html', 2000);
+        const usedTrial = localStorage.getItem('omniFreeTrial');
+        if (usedTrial === 'true') {
+            showToast("Free trial khatam! Login karein. 🚀", "error");
+            setTimeout(() => window.location.href = 'login.html', 1500);
             return;
-        } else {
-            // Mark trial as used
-            localStorage.setItem('omniFreeTrial', 'true');
         }
     }
 
-    const goal = document.getElementById('goal-input').value.trim();
-    const category = document.getElementById('category-select').value;
-    const timeframe = document.getElementById('timeframe-select').value;
+    // 2. Get Correct Inputs (Using 'goalInput' from your HTML)
+    const goalInput = document.getElementById('goalInput');
+    const goal = goalInput ? goalInput.value.trim() : "";
+    const category = document.getElementById('category-select')?.value || "General";
+    const timeframe = document.getElementById('timeframe-select')?.value || "7 days";
 
-    if (!goal) return showToast('Please enter a goal.', 'error');
+    if (!goal) return showToast('Goal likhna zaroori hai!', 'error');
 
+    // 3. UI Updates
     generateBtn.disabled = true;
     loader.classList.remove('hidden');
     outputPanel.classList.add('hidden');
     
     try {
-        // MUST UPDATE WITH YOUR CLOUDFLARE WORKER URL
         const workerUrl = 'https://omnitoolaz-ai-life-planner.devsujit.workers.dev/';
         
         const response = await fetch(workerUrl, {
@@ -127,18 +83,23 @@ generateBtn?.addEventListener('click', async () => {
             body: JSON.stringify({ goal, category, timeframe })
         });
 
-        if (!response.ok) throw new Error('Failed to generate plan.');
+        if (!response.ok) throw new Error('AI Server busy hai, try again.');
         
         const data = await response.json();
-        currentAIResponse = data.plan;
+        
+        // FIX: Ensure we use 'plan' property from worker response
+        currentAIResponse = data.plan || data.response || "No response from AI.";
 
         loader.classList.add('hidden');
         outputPanel.classList.remove('hidden');
         
-        // Render Markdown beautifully using Marked.js
+        // Render Markdown
         aiResultElement.innerHTML = marked.parse(currentAIResponse);
         
-        showToast('Plan generated successfully!');
+        // Mark trial as used ONLY after successful generation
+        if (!currentUser) localStorage.setItem('omniFreeTrial', 'true');
+        
+        showToast('Plan ready hai! ✨');
 
     } catch (error) {
         loader.classList.add('hidden');
@@ -148,40 +109,25 @@ generateBtn?.addEventListener('click', async () => {
     }
 });
 
-// --- OUTPUT PANEL ACTIONS (LOCKED FOR NON-LOGGED IN USERS) ---
-
+// --- ACTIONS (LOCKED) ---
 document.getElementById('copy-btn')?.addEventListener('click', () => {
-    if (!checkLoginAndRedirect("Plan Copy karne")) return; // Login Check
+    if (!checkLoginAndRedirect("Copy")) return;
     navigator.clipboard.writeText(currentAIResponse);
-    showToast('Copied to clipboard!');
-});
-
-document.getElementById('download-btn')?.addEventListener('click', () => {
-    if (!checkLoginAndRedirect("PDF Download karne")) return; // Login Check
-    const element = document.getElementById('ai-result');
-    const opt = {
-        margin: 0.5,
-        filename: 'OmniToolz_LifePlan.pdf',
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-    };
-    html2pdf().set(opt).from(element).save();
-    showToast('Downloading PDF...');
+    showToast('Copied!');
 });
 
 document.getElementById('save-btn')?.addEventListener('click', () => {
-    if (!checkLoginAndRedirect("Plan Save karne")) return; // Login Check
+    if (!checkLoginAndRedirect("Save")) return;
 
-    const goal = document.getElementById('goal-input').value;
+    const goal = document.getElementById('goalInput').value;
     const category = document.getElementById('category-select').value;
     
     const newPlan = {
         id: Date.now(),
-        goal,
-        category,
+        goal: goal,
+        category: category,
         date: new Date().toLocaleDateString(),
-        content: currentAIResponse
+        content: currentAIResponse // Storing AI text, not input text
     };
 
     let history = JSON.parse(localStorage.getItem('omniHistory') || '[]');
@@ -192,6 +138,7 @@ document.getElementById('save-btn')?.addEventListener('click', () => {
     loadHistory();
 });
 
+// History Loading (Fixed Goal Display)
 function loadHistory() {
     const container = document.getElementById('history-container');
     if (!container) return;
@@ -200,7 +147,7 @@ function loadHistory() {
     container.innerHTML = '';
 
     if (history.length === 0) {
-        container.innerHTML = '<p>No saved plans yet. Generate one to see it here!</p>';
+        container.innerHTML = '<p>No plans saved.</p>';
         return;
     }
 
@@ -208,76 +155,19 @@ function loadHistory() {
         const card = document.createElement('div');
         card.className = 'history-card glass-card';
         card.innerHTML = `
-            <h3>${plan.goal}</h3>
-            <div style="display:flex; justify-content:space-between; font-size: 0.85rem; color: var(--text-secondary); margin-top: 10px;">
+            <h3>${plan.goal.substring(0, 40)}...</h3>
+            <div style="display:flex; justify-content:space-between; font-size: 0.8rem; margin-top:10px;">
                 <span>${plan.category}</span>
                 <span>${plan.date}</span>
             </div>
         `;
         card.addEventListener('click', () => {
-            // Auto-navigate back to home tab to view plan
+            // Switch to home and show result
             document.querySelector('[data-target="home"]').click();
             outputPanel.classList.remove('hidden');
             aiResultElement.innerHTML = marked.parse(plan.content);
-            document.getElementById('goal-input').value = plan.goal;
-            window.scrollTo({ top: outputPanel.offsetTop, behavior: 'smooth' });
+            document.getElementById('goalInput').value = plan.goal;
         });
         container.appendChild(card);
     });
 }
-
-// --- RAZORPAY SUBSCRIPTION LOGIC ---
-
-async function openPayment(planType) {
-    if (!currentUser) return showToast("Please login first!", "error");
-
-    // Amount in Paise (e.g., 499 INR = 49900)
-    const amount = planType === 'monthly' ? 49900 : 499900;
-    const planName = planType === 'monthly' ? "Pro Monthly Plan" : "Pro Yearly Plan";
-
-    const options = {
-        "key": "YOUR_RAZORPAY_KEY_ID", // Stellar Insight wala Key ID yahan dalen
-        "amount": amount, 
-        "currency": "INR",
-        "name": "OmniToolz AI",
-        "description": planName,
-        "image": "https://omnitoolz.in/logo.png", // Aapka logo
-        "handler": async function (response) {
-            // Payment success hone par Firestore update karein
-            await activateProPlan(response.razorpay_payment_id, planType);
-        },
-        "prefill": {
-            "email": currentUser.email
-        },
-        "theme": {
-            "color": "#6d28d9"
-        }
-    };
-
-    const rzp1 = new Razorpay(options);
-    rzp1.open();
-}
-
-// Database me user ko Pro banane ka function
-async function activateProPlan(paymentId, planType) {
-    try {
-        const { db, doc, updateDoc } = await import('./firebase.js');
-        const userRef = doc(db, "users", currentUser.uid);
-        
-        await updateDoc(userRef, { 
-            isPro: true,
-            planType: planType,
-            paymentId: paymentId,
-            updatedAt: new Date().toISOString()
-        });
-
-        showToast(`Welcome to Pro ${planType}! 👑`, "success");
-        setTimeout(() => location.reload(), 2000);
-    } catch (err) {
-        showToast("Database update failed but payment was successful. Contact support.", "error");
-    }
-}
-
-// Button Click Event Listeners
-document.getElementById('monthly-pay-btn')?.addEventListener('click', () => openPayment('monthly'));
-document.getElementById('yearly-pay-btn')?.addEventListener('click', () => openPayment('yearly'));
