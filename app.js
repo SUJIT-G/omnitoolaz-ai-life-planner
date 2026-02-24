@@ -3,6 +3,7 @@ import { auth, onAuthStateChanged, signOut } from './firebase.js';
 let currentUser = null;
 let currentAIResponse = "";
 
+// Element Selectors
 const logoutBtn = document.getElementById('logout-btn');
 const themeToggle = document.getElementById('theme-toggle');
 const toastContainer = document.getElementById('toast-container');
@@ -16,9 +17,10 @@ const pageTitle = document.getElementById('current-page-title');
 const navItems = document.querySelectorAll('.nav-item');
 const sections = document.querySelectorAll('.content-section');
 
+// Markdown Setup
 marked.setOptions({ breaks: true, gfm: true });
 
-// --- AUTH STATE ---
+// --- AUTH LOGIC (Wait for user) ---
 onAuthStateChanged(auth, (user) => {
     if (user) {
         currentUser = user;
@@ -27,9 +29,16 @@ onAuthStateChanged(auth, (user) => {
     } else {
         currentUser = null;
         if(logoutBtn) logoutBtn.classList.add('hidden');
+        // Bina login ke bhi user ko index.html (planner) par rehne dein
     }
 });
 
+logoutBtn?.addEventListener('click', async () => {
+    await signOut(auth);
+    window.location.reload(); // Logout ke baad page refresh karein
+});
+
+// Toast Utility
 function showToast(message, type = 'info') {
     const toast = document.createElement('div');
     toast.className = 'toast';
@@ -39,29 +48,37 @@ function showToast(message, type = 'info') {
     setTimeout(() => toast.remove(), 3000);
 }
 
-// Helper: Check login
-function checkLoginAndRedirect(actionText) {
-    if (!currentUser) {
-        showToast(`${actionText} ke liye login karein! 🔒`, "error");
-        setTimeout(() => window.location.href = 'login.html', 1500);
-        return false;
-    }
-    return true;
-}
+// --- SIDEBAR NAVIGATION FIX ---
+navItems.forEach(item => {
+    item.addEventListener('click', (e) => {
+        e.preventDefault();
+        const targetId = item.getAttribute('data-target');
+        if(!targetId) return;
 
-// --- GENERATE LOGIC (FIXED) ---
-generateBtn?.addEventListener('click', async () => {
-    // 1. Check Freemium Trial
-    if (!currentUser) {
-        const usedTrial = localStorage.getItem('omniFreeTrial');
-        if (usedTrial === 'true') {
-            showToast("Free trial khatam! Login karein. 🚀", "error");
+        // "My Plans" lock if not logged in
+        if ((targetId === 'history' || targetId === 'my-plans') && !currentUser) {
+            showToast("Apne plans dekhne ke liye login karein! 🔒", "error");
             setTimeout(() => window.location.href = 'login.html', 1500);
             return;
         }
-    }
 
-    // 2. Get Correct Inputs (Using 'goalInput' from your HTML)
+        // Active class toggle
+        navItems.forEach(n => n.classList.remove('active'));
+        item.classList.add('active');
+
+        // Update title
+        if(pageTitle) pageTitle.innerText = item.innerText.replace(/[🏠📁⚡⚙️]/g, '').trim();
+
+        // Switch sections
+        sections.forEach(s => s.classList.add('hidden'));
+        const targetSection = document.getElementById(`${targetId}-section`);
+        if(targetSection) targetSection.classList.remove('hidden');
+    });
+});
+
+// --- DATA FETCH LOGIC (FIXED IDs) ---
+generateBtn?.addEventListener('click', async () => {
+    // Correcting IDs: Aapke HTML mein ID 'goalInput' hai (bin dash wala)
     const goalInput = document.getElementById('goalInput');
     const goal = goalInput ? goalInput.value.trim() : "";
     const category = document.getElementById('category-select')?.value || "General";
@@ -69,7 +86,17 @@ generateBtn?.addEventListener('click', async () => {
 
     if (!goal) return showToast('Goal likhna zaroori hai!', 'error');
 
-    // 3. UI Updates
+    // 1 Free Trial Logic
+    if (!currentUser) {
+        const usedTrial = localStorage.getItem('omniFreeTrial');
+        if (usedTrial === 'true') {
+            showToast("Aapka free trial khatam! Save aur naya plan banane ke liye login karein. 🚀", "error");
+            setTimeout(() => window.location.href = 'login.html', 2000);
+            return;
+        }
+    }
+
+    // UI state
     generateBtn.disabled = true;
     loader.classList.remove('hidden');
     outputPanel.classList.add('hidden');
@@ -83,62 +110,82 @@ generateBtn?.addEventListener('click', async () => {
             body: JSON.stringify({ goal, category, timeframe })
         });
 
-        if (!response.ok) throw new Error('AI Server busy hai, try again.');
+        if (!response.ok) throw new Error('Worker response failed');
         
         const data = await response.json();
-        
-        // FIX: Ensure we use 'plan' property from worker response
-        currentAIResponse = data.plan || data.response || "No response from AI.";
+        currentAIResponse = data.plan;
 
         loader.classList.add('hidden');
         outputPanel.classList.remove('hidden');
         
-        // Render Markdown
+        // Beautiful Render
         aiResultElement.innerHTML = marked.parse(currentAIResponse);
         
-        // Mark trial as used ONLY after successful generation
+        // First generation complete, mark trial
         if (!currentUser) localStorage.setItem('omniFreeTrial', 'true');
         
-        showToast('Plan ready hai! ✨');
+        showToast('AI ne aapka plan ready kar diya hai! ✨');
 
     } catch (error) {
         loader.classList.add('hidden');
-        showToast(error.message, 'error');
+        showToast("Fetch error: " + error.message, 'error');
     } finally {
         generateBtn.disabled = false;
     }
 });
 
-// --- ACTIONS (LOCKED) ---
+// --- ACTIONS (LOCKED FOR NON-LOGGED IN) ---
+function authGuard(action) {
+    if (!currentUser) {
+        showToast(`${action} ke liye login karein! 🔒`, "error");
+        setTimeout(() => window.location.href = 'login.html', 1500);
+        return false;
+    }
+    return true;
+}
+
 document.getElementById('copy-btn')?.addEventListener('click', () => {
-    if (!checkLoginAndRedirect("Copy")) return;
+    if (!authGuard("Copy")) return;
     navigator.clipboard.writeText(currentAIResponse);
-    showToast('Copied!');
+    showToast('Copied to clipboard!');
+});
+
+document.getElementById('download-btn')?.addEventListener('click', () => {
+    if (!authGuard("Download")) return;
+    const element = document.getElementById('ai-result');
+    const opt = {
+        margin: 0.5,
+        filename: 'OmniToolz_Plan.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+    };
+    html2pdf().set(opt).from(element).save();
 });
 
 document.getElementById('save-btn')?.addEventListener('click', () => {
-    if (!checkLoginAndRedirect("Save")) return;
+    if (!authGuard("Save")) return;
 
     const goal = document.getElementById('goalInput').value;
     const category = document.getElementById('category-select').value;
     
     const newPlan = {
         id: Date.now(),
-        goal: goal,
-        category: category,
+        goal,
+        category,
         date: new Date().toLocaleDateString(),
-        content: currentAIResponse // Storing AI text, not input text
+        content: currentAIResponse
     };
 
     let history = JSON.parse(localStorage.getItem('omniHistory') || '[]');
     history.push(newPlan);
     localStorage.setItem('omniHistory', JSON.stringify(history));
     
-    showToast('Saved to My Plans!');
+    showToast('Plan history mein save ho gaya!');
     loadHistory();
 });
 
-// History Loading (Fixed Goal Display)
+// Load History Helper
 function loadHistory() {
     const container = document.getElementById('history-container');
     if (!container) return;
@@ -147,7 +194,7 @@ function loadHistory() {
     container.innerHTML = '';
 
     if (history.length === 0) {
-        container.innerHTML = '<p>No plans saved.</p>';
+        container.innerHTML = '<p>Abhi koi saved plans nahi hain.</p>';
         return;
     }
 
@@ -162,7 +209,6 @@ function loadHistory() {
             </div>
         `;
         card.addEventListener('click', () => {
-            // Switch to home and show result
             document.querySelector('[data-target="home"]').click();
             outputPanel.classList.remove('hidden');
             aiResultElement.innerHTML = marked.parse(plan.content);
@@ -171,3 +217,6 @@ function loadHistory() {
         container.appendChild(card);
     });
 }
+// Button Click Event Listeners
+document.getElementById('monthly-pay-btn')?.addEventListener('click', () => openPayment('monthly'));
+document.getElementById('yearly-pay-btn')?.addEventListener('click', () => openPayment('yearly'));
