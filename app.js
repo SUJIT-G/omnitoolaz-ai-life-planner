@@ -63,25 +63,23 @@ navItems.forEach(item => {
 
 // --- WORKER AI FETCH LOGIC ---
 generateBtn?.addEventListener('click', async () => {
-    // Check if Guest trial is over
     if (!currentUser && localStorage.getItem('omniFreeTrial') === 'true') {
-        showToast("Aapka 1 free plan ho gaya hai! Aur banane ke liye Signup karein. 🚀", "error");
+        showToast("Free trial used! Please Login to generate more plans. 🚀", "error");
         setTimeout(() => window.location.href = 'login.html', 2000);
         return;
     }
 
-    // ID Fallback Support (goalInput ya goal-input dono chalenge)
     const goalEl = document.getElementById('goalInput') || document.getElementById('goal-input');
     const goal = goalEl?.value.trim();
     const category = document.getElementById('category-select')?.value || "General";
     const timeframe = document.getElementById('timeframe-select')?.value || "7 Days";
 
+    // UPDATED TO ENGLISH
     if (!goal) {
-        showToast('Pehle apna goal toh likhiye! 😊', 'error');
+        showToast('Please enter your goal first! 😊', 'error');
         return;
     }
 
-    // UI Updates
     generateBtn.disabled = true;
     loader.classList.remove('hidden');
     outputPanel.classList.add('hidden');
@@ -97,7 +95,7 @@ generateBtn?.addEventListener('click', async () => {
         const data = await response.json();
         
         if (!response.ok || !data.plan) {
-            throw new Error(data.error || 'AI response nahi mila.');
+            throw new Error(data.error || 'AI response not received.');
         }
 
         currentAIResponse = data.plan;
@@ -106,9 +104,8 @@ generateBtn?.addEventListener('click', async () => {
         loader.classList.add('hidden');
         outputPanel.classList.remove('hidden');
 
-        // Mark Guest Trial Used
         if (!currentUser) localStorage.setItem('omniFreeTrial', 'true');
-        showToast('Plan ready hai! ✨');
+        showToast('Plan generated successfully! ✨');
 
     } catch (error) {
         loader.classList.add('hidden');
@@ -116,10 +113,4 @@ generateBtn?.addEventListener('click', async () => {
     } finally {
         generateBtn.disabled = false;
     }
-});
-
-// Logout Fix
-logoutBtn?.addEventListener('click', async () => {
-    await signOut(auth);
-    window.location.reload(); 
 });
