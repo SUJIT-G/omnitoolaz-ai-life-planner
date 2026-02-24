@@ -22,6 +22,7 @@ marked.setOptions({
     gfm: true     // GitHub Flavored Markdown
 });
 
+// --- AUTH STATE LOGIC (FREEMIUM FRIENDLY) ---
 onAuthStateChanged(auth, (user) => {
     if (user) {
         currentUser = user;
@@ -30,13 +31,13 @@ onAuthStateChanged(auth, (user) => {
     } else {
         currentUser = null;
         document.getElementById('logout-btn')?.classList.add('hidden'); // Bina login wale ko logout na dikhayein
-        // Pehle yahan se user ko index.html (login) bhej dete the, ab nahi bhejenge!
+        // User ko site par rehne dein, login page par redirect NAHI karenge
     }
 });
 
 logoutBtn?.addEventListener('click', async () => {
     await signOut(auth);
-    window.location.href = 'index.html';
+    window.location.href = 'index.html'; // Logout ke baad main page par hi rakhein
 });
 
 function showToast(message, type = 'info') {
@@ -48,25 +49,42 @@ function showToast(message, type = 'info') {
     setTimeout(() => toast.remove(), 3000);
 }
 
+// Helper: Check login before allowing actions
+function checkLoginAndRedirect(actionText) {
+    if (!currentUser) {
+        showToast(`${actionText} ke liye account banayein ya Login karein! 🔒`, "error");
+        setTimeout(() => window.location.href = 'login.html', 2000); // Redirect to login page
+        return false;
+    }
+    return true;
+}
+
 themeToggle?.addEventListener('click', () => {
     const currentTheme = document.body.getAttribute('data-theme') || 'dark';
     const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
     document.body.setAttribute('data-theme', newTheme);
 });
 
-// Fix: Make Sidebar Navigation Work smoothly
+// Sidebar Navigation
 navItems.forEach(item => {
     item.addEventListener('click', (e) => {
         e.preventDefault();
         const targetId = item.getAttribute('data-target');
         if(!targetId) return;
 
+        // Block "My Plans" or "History" if user is not logged in
+        if ((targetId === 'history' || targetId === 'my-plans') && !currentUser) {
+            showToast("My Plans dekhne ke liye Login karein! 🔒", "error");
+            setTimeout(() => window.location.href = 'login.html', 2000);
+            return;
+        }
+
         // Update active class on menu
         navItems.forEach(n => n.classList.remove('active'));
         item.classList.add('active');
 
         // Update Top Navbar Title based on menu item text
-        pageTitle.innerText = item.innerText.replace(/[🏠📁⚡⚙️]/g, '').trim();
+        if(pageTitle) pageTitle.innerText = item.innerText.replace(/[🏠📁⚡⚙️]/g, '').trim();
 
         // Hide all sections, show target section
         sections.forEach(s => s.classList.add('hidden'));
@@ -74,7 +92,21 @@ navItems.forEach(item => {
     });
 });
 
+// --- GENERATE PLAN LOGIC (1 FREE TRIAL) ---
 generateBtn?.addEventListener('click', async () => {
+    // Free Trial Check
+    if (!currentUser) {
+        const usedFreeTrial = localStorage.getItem('omniFreeTrial');
+        if (usedFreeTrial === 'true') {
+            showToast("Aapka 1 Free Plan use ho chuka hai. Aur generate karne ke liye Login karein! 🚀", "error");
+            setTimeout(() => window.location.href = 'login.html', 2000);
+            return;
+        } else {
+            // Mark trial as used
+            localStorage.setItem('omniFreeTrial', 'true');
+        }
+    }
+
     const goal = document.getElementById('goal-input').value.trim();
     const category = document.getElementById('category-select').value;
     const timeframe = document.getElementById('timeframe-select').value;
@@ -116,13 +148,16 @@ generateBtn?.addEventListener('click', async () => {
     }
 });
 
-// Output Panel Actions
+// --- OUTPUT PANEL ACTIONS (LOCKED FOR NON-LOGGED IN USERS) ---
+
 document.getElementById('copy-btn')?.addEventListener('click', () => {
+    if (!checkLoginAndRedirect("Plan Copy karne")) return; // Login Check
     navigator.clipboard.writeText(currentAIResponse);
     showToast('Copied to clipboard!');
 });
 
 document.getElementById('download-btn')?.addEventListener('click', () => {
+    if (!checkLoginAndRedirect("PDF Download karne")) return; // Login Check
     const element = document.getElementById('ai-result');
     const opt = {
         margin: 0.5,
@@ -136,6 +171,8 @@ document.getElementById('download-btn')?.addEventListener('click', () => {
 });
 
 document.getElementById('save-btn')?.addEventListener('click', () => {
+    if (!checkLoginAndRedirect("Plan Save karne")) return; // Login Check
+
     const goal = document.getElementById('goal-input').value;
     const category = document.getElementById('category-select').value;
     
