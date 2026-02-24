@@ -320,53 +320,40 @@ input:focus, select:focus { border-color: var(--accent-color); }
     flex: 1; /* Ye content ko push karega taki footer niche hi rahe */
 }
 
-/* Footer Styling */
-.main-footer {
-    width: 100%;
-    margin-top: auto; /* Footer hamesha bottom mein rahega */
-    padding: 1.5rem 2rem;
-    border-radius: 0;
-    border-left: none;
-    border-right: none;
-    border-bottom: none;
-    background: rgba(26, 11, 46, 0.8);
-}
-
-.footer-content {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
+.dashboard-footer {
+    margin-top: auto;
+    padding: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    text-align: center;
+    background: rgba(0, 0, 0, 0.2);
 }
 
 .footer-links {
     display: flex;
-    gap: 1.5rem;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
 }
 
 .footer-links a {
     color: var(--text-secondary);
+    font-size: 0.85rem;
     text-decoration: none;
-    font-size: 0.8rem;
+    transition: color 0.3s;
 }
 
 .footer-links a:hover {
-    color: var(--accent-color);
+    color: var(--accent-color); /* Purple color */
 }
 
-.footer-copy {
-    text-align: center;
+.copyright {
+    color: rgba(255, 255, 255, 0.4);
     font-size: 0.75rem;
-    color: var(--text-secondary);
-    border-top: 1px solid var(--card-border);
-    padding-top: 1rem;
 }
 
-/* Mobile responsive */
-@media (max-width: 768px) {
-    .footer-content {
-        flex-direction: column;
-        gap: 1rem;
-        text-align: center;
-    }
+/* Sidebar ke bottom mein fix karne ke liye agar zaroorat ho */
+.sidebar {
+    display: flex;
+    flex-direction: column;
 }
