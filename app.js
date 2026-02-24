@@ -3,7 +3,7 @@ import { auth, onAuthStateChanged, signOut } from './firebase.js';
 let currentUser = null;
 let currentAIResponse = "";
 
-// Element Selectors with Safety Checks
+// Selectors
 const logoutBtn = document.getElementById('logout-btn');
 const themeToggle = document.getElementById('theme-toggle');
 const toastContainer = document.getElementById('toast-container');
@@ -12,83 +12,76 @@ const loader = document.getElementById('loader');
 const outputPanel = document.getElementById('output-panel');
 const aiResultElement = document.getElementById('ai-result');
 const pageTitle = document.getElementById('current-page-title');
-
 const navItems = document.querySelectorAll('.nav-item');
 const sections = document.querySelectorAll('.content-section');
 
 marked.setOptions({ breaks: true, gfm: true });
 
-// --- AUTH LOGIC ---
+// --- AUTH STATE ---
 onAuthStateChanged(auth, (user) => {
+    currentUser = user;
     if (user) {
-        currentUser = user;
         loadHistory();
         logoutBtn?.classList.remove('hidden');
     } else {
-        currentUser = null;
         logoutBtn?.classList.add('hidden');
     }
-});
-
-logoutBtn?.addEventListener('click', async () => {
-    await signOut(auth);
-    window.location.href = 'index.html'; // Dashboard/Home par hi rakhega
 });
 
 function showToast(message, type = 'info') {
     const toast = document.createElement('div');
     toast.className = 'toast';
-    toast.style.borderLeftColor = type === 'error' ? 'var(--danger)' : 'var(--accent-color)';
+    toast.style.borderLeftColor = type === 'error' ? '#ff4b2b' : '#6d28d9';
     toast.innerText = message;
     toastContainer?.appendChild(toast);
     setTimeout(() => toast.remove(), 3000);
 }
 
-// Helper: Action Security
-function checkAccess(action) {
-    if (!currentUser) {
-        showToast(`${action} ke liye Login karein! 🔒`, "error");
-        setTimeout(() => window.location.href = 'login.html', 1500);
-        return false;
-    }
-    return true;
-}
-
-// --- SIDEBAR NAV FIX ---
+// --- SIDEBAR NAVIGATION (NO SIGNUP LOCK) ---
 navItems.forEach(item => {
     item.addEventListener('click', (e) => {
+        e.preventDefault();
         const targetId = item.getAttribute('data-target');
-        
-        // Lock My Plans for non-logged users
+
+        // Sirf "My Plans" ke liye login check karenge, baaki sab open hai
         if (targetId === 'history' && !currentUser) {
-            e.preventDefault();
-            return checkAccess("My Plans dekhne");
+            showToast("Apne purane plans dekhne ke liye Login zaroori hai! 🔒", "info");
+            setTimeout(() => window.location.href = 'login.html', 1500);
+            return;
         }
 
-        e.preventDefault();
+        // Section Switching logic
         navItems.forEach(n => n.classList.remove('active'));
         item.classList.add('active');
         if(pageTitle) pageTitle.innerText = item.innerText.replace(/[🏠📁⚡⚙️]/g, '').trim();
+        
         sections.forEach(s => s.classList.add('hidden'));
-        document.getElementById(`${targetId}-section`)?.classList.remove('hidden');
+        const targetSection = document.getElementById(`${targetId}-section`);
+        if(targetSection) targetSection.classList.remove('hidden');
     });
 });
 
-// --- GENERATE LOGIC ---
+// --- WORKER AI FETCH LOGIC ---
 generateBtn?.addEventListener('click', async () => {
-    // 1 Free Trial Check
+    // Check if Guest trial is over
     if (!currentUser && localStorage.getItem('omniFreeTrial') === 'true') {
-        return checkAccess("Naya plan banane");
+        showToast("Aapka 1 free plan ho gaya hai! Aur banane ke liye Signup karein. 🚀", "error");
+        setTimeout(() => window.location.href = 'login.html', 2000);
+        return;
     }
 
-    // ID Fallback: 'goalInput' (Screenshot wala) ya 'goal-input' (Old code wala)
+    // ID Fallback Support (goalInput ya goal-input dono chalenge)
     const goalEl = document.getElementById('goalInput') || document.getElementById('goal-input');
     const goal = goalEl?.value.trim();
-    const category = document.getElementById('category-select')?.value;
-    const timeframe = document.getElementById('timeframe-select')?.value;
+    const category = document.getElementById('category-select')?.value || "General";
+    const timeframe = document.getElementById('timeframe-select')?.value || "7 Days";
 
-    if (!goal) return showToast('Please enter a goal.', 'error');
+    if (!goal) {
+        showToast('Pehle apna goal toh likhiye! 😊', 'error');
+        return;
+    }
 
+    // UI Updates
     generateBtn.disabled = true;
     loader.classList.remove('hidden');
     outputPanel.classList.add('hidden');
@@ -101,38 +94,32 @@ generateBtn?.addEventListener('click', async () => {
             body: JSON.stringify({ goal, category, timeframe })
         });
 
-        if (!response.ok) throw new Error('AI not responding. Check Worker.');
-        
         const data = await response.json();
-        currentAIResponse = data.plan;
+        
+        if (!response.ok || !data.plan) {
+            throw new Error(data.error || 'AI response nahi mila.');
+        }
 
-        loader.classList.add('hidden');
-        outputPanel.classList.remove('hidden');
+        currentAIResponse = data.plan;
         aiResultElement.innerHTML = marked.parse(currentAIResponse);
         
-        // Mark trial used
+        loader.classList.add('hidden');
+        outputPanel.classList.remove('hidden');
+
+        // Mark Guest Trial Used
         if (!currentUser) localStorage.setItem('omniFreeTrial', 'true');
-        showToast('Plan generated!');
+        showToast('Plan ready hai! ✨');
 
     } catch (error) {
         loader.classList.add('hidden');
-        showToast(error.message, 'error');
+        showToast("Error: " + error.message, 'error');
     } finally {
         generateBtn.disabled = false;
     }
 });
 
-// --- LOCKED ACTIONS ---
-document.getElementById('copy-btn')?.addEventListener('click', () => {
-    if (checkAccess("Copy karne")) {
-        navigator.clipboard.writeText(currentAIResponse);
-        showToast('Copied!');
-    }
+// Logout Fix
+logoutBtn?.addEventListener('click', async () => {
+    await signOut(auth);
+    window.location.reload(); 
 });
-
-document.getElementById('save-btn')?.addEventListener('click', () => {
-    if (!checkAccess("Save karne")) return;
-    // ... rest of your save logic
-});
-
-// Load History function same rahegi
