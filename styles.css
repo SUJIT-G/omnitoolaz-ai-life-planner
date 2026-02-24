@@ -321,11 +321,22 @@ input:focus, select:focus { border-color: var(--accent-color); }
 }
 
 .dashboard-footer {
-    margin-top: auto;
-    padding: 20px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    position: fixed;
+    bottom: 0;
+    left: 260px; /* Sidebar ki width ke barabar gap */
+    right: 0;
+    padding: 10px;
+    background: var(--bg-dark); /* Ya dashboard ka background color */
     text-align: center;
-    background: rgba(0, 0, 0, 0.2);
+    border-top: 1px solid rgba(255,255,255,0.05);
+    z-index: 100;
+}
+
+/* Mobile ke liye gap reset karein */
+@media (max-width: 768px) {
+    .dashboard-footer {
+        left: 0;
+    }
 }
 
 .footer-links {
