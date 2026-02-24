@@ -217,6 +217,3 @@ function loadHistory() {
         container.appendChild(card);
     });
 }
-// Button Click Event Listeners
-document.getElementById('monthly-pay-btn')?.addEventListener('click', () => openPayment('monthly'));
-document.getElementById('yearly-pay-btn')?.addEventListener('click', () => openPayment('yearly'));
