@@ -18,10 +18,9 @@ const navItems = document.querySelectorAll('.nav-item');
 const sections = document.querySelectorAll('.content-section');
 
 // --- INITIALIZATION ---
-marked.setOptions({
-    breaks: true,
-    gfm: true
-});
+if (typeof marked !== 'undefined') {
+    marked.setOptions({ breaks: true, gfm: true });
+}
 
 onAuthStateChanged(auth, (user) => {
     if (user) {
@@ -57,7 +56,6 @@ navItems.forEach(item => {
         const targetId = item.getAttribute('data-target');
         if(!targetId) return;
 
-        // "My Plans" is locked for Guests
         if (targetId === 'history' && !currentUser) {
             showToast("Please login to view your saved plans! 🔒", "error");
             setTimeout(() => window.location.href = 'login.html', 1500);
@@ -67,7 +65,7 @@ navItems.forEach(item => {
         navItems.forEach(n => n.classList.remove('active'));
         item.classList.add('active');
 
-        if(pageTitle) pageTitle.innerText = item.innerText.replace(/[🏠📁⚡⚙️]/g, '').trim();
+        if(pageTitle) pageTitle.innerText = item.innerText.replace(/[🏠📊⚡⚙️]/g, '').trim();
 
         sections.forEach(s => s.classList.add('hidden'));
         const targetSection = document.getElementById(`${targetId}-section`);
@@ -77,54 +75,76 @@ navItems.forEach(item => {
 
 // --- AI GENERATION LOGIC ---
 generateBtn?.addEventListener('click', async () => {
-    // Guest Trial Check
     if (!currentUser && localStorage.getItem('omniFreeTrial') === 'true') {
         showToast("Free trial limit reached! Please login to continue. 🚀", "error");
         setTimeout(() => window.location.href = 'login.html', 2000);
         return;
     }
 
-    // Support for both common IDs (goalInput vs goal-input)
     const goalEl = document.getElementById('goalInput') || document.getElementById('goal-input');
-    const goal = goalEl?.value.trim();
-    const category = document.getElementById('category-select')?.value;
-    const timeframe = document.getElementById('timeframe-select')?.value;
+    const goal = goalEl?.value?.trim();
+    const category = document.getElementById('category-select')?.value || 'General';
+    const timeframe = document.getElementById('timeframe-select')?.value || 'Short-term';
 
     if (!goal) return showToast('Please enter your goal first! 😊', 'error');
 
     generateBtn.disabled = true;
-    loader.classList.remove('hidden');
-    outputPanel.classList.add('hidden');
+    if(loader) loader.classList.remove('hidden');
+    if(outputPanel) outputPanel.classList.add('hidden');
     
     try {
         const workerUrl = 'https://omnitoolz-backend-v2.devsujit.workers.dev/';
+        console.log("🚀 Request Bhej Raha Hai API Ko:", workerUrl);
         
+        const payload = { goal, category, timeframe };
+        console.log("📦 Data Bheja Gaya:", payload);
+
         const response = await fetch(workerUrl, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ goal, category, timeframe })
+            headers: { 
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(payload)
         });
 
-        if (!response.ok) throw new Error('Failed to generate plan.');
+        console.log("🔄 API Status Code:", response.status);
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error("❌ Worker Error:", errorText);
+            throw new Error(`Failed to generate plan. (Status: ${response.status})`);
+        }
         
         const data = await response.json();
-        currentAIResponse = data.plan;
+        console.log("✅ Worker Response:", data);
 
-        loader.classList.add('hidden');
-        outputPanel.classList.remove('hidden');
+        // Worker jo bhi data bhej raha hai usko handle karna (plan, result ya pura data)
+        currentAIResponse = data.plan || data.result || data.response || data;
+
+        if(loader) loader.classList.add('hidden');
+        if(outputPanel) outputPanel.classList.remove('hidden');
         
-        aiResultElement.innerHTML = marked.parse(currentAIResponse);
+        if (aiResultElement && typeof marked !== 'undefined') {
+            aiResultElement.innerHTML = marked.parse(currentAIResponse);
+        } else if (aiResultElement) {
+            aiResultElement.innerText = currentAIResponse; // Fallback if marked.js is missing
+        }
         
         if (!currentUser) localStorage.setItem('omniFreeTrial', 'true');
         showToast('Plan generated successfully!');
 
     } catch (error) {
-        loader.classList.add('hidden');
-        showToast(error.message, 'error');
+        console.error("🚨 Fetch Catch Error:", error);
+        if(loader) loader.classList.add('hidden');
+        showToast(error.message || 'Server Connection Failed. Please try again.', 'error');
     } finally {
         generateBtn.disabled = false;
     }
 });
+
+// ... [Baki ka aapka Output Panel, History, aur Payment Logic same rahega] ...
+// (Oopar ka apna baaki ka code copy-paste rakh lijiye)
 
 // --- OUTPUT PANEL ACTIONS ---
 document.getElementById('copy-btn')?.addEventListener('click', () => {
