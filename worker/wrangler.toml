@@ -1,7 +1,6 @@
-name = "omnitoolaz-ai-life-planner"
+name = "omnitoolz-backend"
 main = "worker.js"
-compatibility_date = "2024-02-21"
+compatibility_date = "2024-01-01"
 
-# Bind Cloudflare AI capability
 [ai]
 binding = "AI"
