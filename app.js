@@ -97,7 +97,7 @@ generateBtn?.addEventListener('click', async () => {
     outputPanel.classList.add('hidden');
     
     try {
-        const workerUrl = 'https://omnitoolz-backend.devsujit.workers.dev/';
+        const workerUrl = 'https://omnitoolz-backend-v2.devsujit.workers.dev/';
         
         const response = await fetch(workerUrl, {
             method: 'POST',
